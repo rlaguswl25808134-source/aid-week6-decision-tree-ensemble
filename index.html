@@ -3,467 +3,327 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>6주차 스터디 | 결정 트리 · 교차 검증과 그리드 서치 · 트리의 앙상블</title>
-<meta name="description" content="혼자 공부하는 머신러닝+딥러닝 05-1, 05-2, 05-3 정리: 결정 트리, 교차 검증과 그리드 서치, 트리의 앙상블(랜덤 포레스트, 엑스트라 트리, 그레이디언트 부스팅, 히스토그램 기반 그레이디언트 부스팅)">
-<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
-<script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll());</script>
+<title>05-3 트리의 앙상블 정리 + 좌표 보정 실험 개요</title>
+<meta name="description" content="혼공머신 05-3 트리의 앙상블 정리와 외부 자기장에 의한 스마트패드 좌표 보정 실험 개요">
 <style>
-:root{--primary:#0f766e;--primary-light:#f0fdfa;--primary-dark:#115e59;--accent:#f59e0b;--bg:#f8fafc;--card:#ffffff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--code-bg:#0f172a;--code-inline:#e2e8f0;--quote-bg:#fffbeb;--quote-border:#f59e0b}
+:root{--primary:#0f766e;--bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--border:#e2e8f0;--quote-bg:#fffbeb;--quote-border:#f59e0b}
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;scroll-padding-top:88px}
-body{font-family:"Pretendard",-apple-system,BlinkMacSystemFont,system-ui,"Malgun Gothic",sans-serif;background:var(--bg);color:var(--text);line-height:1.75;-webkit-font-smoothing:antialiased}
-#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));z-index:100}
-header{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-header .brand{font-size:15px;font-weight:700}.brand span{color:var(--primary)}
-#navToggle{display:none;border:1px solid var(--border);background:#fff;border-radius:8px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit}
-.layout{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:260px 1fr;gap:28px;padding:28px 20px 60px}
-nav{position:sticky;top:84px;align-self:start;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;max-height:calc(100vh - 110px);overflow:auto}
-nav h3{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
-nav ul{list-style:none}nav li{margin:4px 0}
-nav a{display:block;padding:6px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:14px}
-nav a:hover{background:var(--primary-light);color:var(--primary-dark)}
-main{min-width:0}
-.hero{background:linear-gradient(135deg,#0f766e 0%,#115e59 60%,#134e4a 100%);color:#fff;border-radius:18px;padding:34px 30px;margin-bottom:26px}
-.hero .tag{display:inline-block;background:rgba(255,255,255,.18);padding:4px 10px;border-radius:999px;font-size:12px;margin-bottom:10px}
-.hero h1{font-size:30px;line-height:1.3;margin-bottom:10px}
-.hero p{color:rgba(255,255,255,.9);max-width:900px}
-section.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:26px 26px;margin-bottom:22px}
-h2{font-size:24px;margin:4px 0 14px;line-height:1.35;padding-top:6px}
-h3{font-size:18px;margin:22px 0 8px;line-height:1.4}
-h4{font-size:16px;margin:16px 0 6px}
+body{font-family:"Pretendard","Malgun Gothic",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.8}
+.wrap{max-width:900px;margin:0 auto;padding:32px 20px 72px}
+.content{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px 36px;box-shadow:0 4px 20px rgba(15,23,42,.04)}
+h1{font-size:30px;line-height:1.3;margin-bottom:8px;padding-bottom:16px;border-bottom:3px solid var(--primary)}
+h2{font-size:23px;margin:32px 0 12px;padding-left:12px;border-left:5px solid var(--primary)}
+h3{font-size:19px;margin:24px 0 8px;color:var(--primary)}
+h4{font-size:16px;margin:18px 0 6px}
 p{margin:8px 0}
-ul,ol{margin:8px 0 8px 22px}
+ul,ol{margin:8px 0 8px 24px}
 li{margin:4px 0}
-.table-wrap{overflow:auto;margin:12px 0;border:1px solid var(--border);border-radius:10px}
+strong{color:#0f766e}
+blockquote{background:var(--quote-bg);border-left:4px solid var(--quote-border);padding:12px 16px;border-radius:8px;margin:14px 0;color:#78350f}
+.table-wrap{overflow:auto;margin:14px 0;border:1px solid var(--border);border-radius:10px}
 table{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
 th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
 th{background:#f1f5f9;font-weight:700}
 tr:last-child td{border-bottom:none}
-pre{background:var(--code-bg);color:#e6edf3;border-radius:12px;padding:14px 16px;overflow:auto;margin:10px 0;font-size:13px;line-height:1.6}
-code{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-:not(pre)>code{background:var(--code-inline);color:#0f172a;padding:2px 6px;border-radius:6px;font-size:.92em}
-blockquote{background:var(--quote-bg);border-left:4px solid var(--quote-border);padding:10px 14px;border-radius:8px;margin:12px 0;color:#78350f}
-.note{background:var(--primary-light);border:1px solid #99f6e4;color:#134e4a;padding:12px 14px;border-radius:10px;margin:12px 0}
-.muted{color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:12px}
-.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:999px;background:#e2e8f0;color:#334155;margin-right:4px}
-footer{color:var(--muted);font-size:13px;text-align:center;padding:20px 0 40px}
-@media (max-width: 900px){.layout{grid-template-columns:1fr}nav{position:static;max-height:none;display:none}nav.open{display:block}#navToggle{display:inline-block}.hero h1{font-size:24px}}
+code{font-family:Consolas,"JetBrains Mono",monospace;background:#e2e8f0;color:#0f172a;padding:2px 6px;border-radius:5px;font-size:.92em}
+img{max-width:100%;height:auto;border-radius:14px;border:1px solid var(--border);display:block;margin:16px auto}
+hr{border:none;border-top:1px solid var(--border);margin:28px 0}
+footer{text-align:center;color:var(--muted);font-size:13px;margin-top:28px}
+@media(max-width:640px){.content{padding:22px 18px}h1{font-size:24px}h2{font-size:20px}}
 </style>
 </head>
 <body>
-<div id="progress"></div>
-<header>
-  <div class="brand"><span>ML Study</span> · 6주차 트리 알고리즘</div>
-  <button id="navToggle">목차</button>
-</header>
-<div class="layout">
-  <nav id="toc">
-    <h3>목차</h3>
-    <ul>
-      <li><a href="#overview">0. 이번 주 한눈에 보기</a></li>
-      <li><a href="#ch05-1">1. 05-1 결정 트리</a></li>
-      <li><a href="#ch05-2">2. 05-2 교차 검증과 그리드 서치</a></li>
-      <li><a href="#ch05-3">3. 05-3 트리의 앙상블</a></li>
-      <li><a href="#summary">4. 6주차 스터디 요약</a></li>
-      <li><a href="#birthday">🎂 생일 축하</a></li>
-    </ul>
-  </nav>
-  <main>
-    <div class="hero">
-      <div class="tag">혼자 공부하는 머신러닝+딥러닝 · Chapter 05</div>
-      <h1>6주차 스터디: 결정 트리 · 교차 검증과 그리드 서치 · 트리의 앙상블</h1>
-      <p>와인 데이터(알코올 도수, 당도, pH → 레드/화이트 분류)를 바탕으로 결정 트리의 원리, 신뢰할 수 있는 모델 평가와 하이퍼파라미터 튜닝, 그리고 여러 트리를 결합해 성능을 높이는 앙상블 학습(Random Forest, Extra Trees, Gradient Boosting, Histogram-based Gradient Boosting)을 정리했습니다.</p>
-    </div>
-
-    <section class="card" id="birthday">
-      <h2>🎂 생일 축하합니다!</h2>
-      <p>오늘의 주인공, 생일 진심으로 축하해요! 맛있는 것도 많이 먹고, 웃는 일 가득한 행복한 하루 보내길 바랍니다. 🎉</p>
-      <figure style="margin-top:14px;text-align:center;">
-        <img src="KakaoTalk_20261118_212420149.jpg" alt="생일 축하 사진" style="max-width:min(100%,720px);width:100%;height:auto;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 24px rgba(15,23,42,.08);">
-        <figcaption class="muted" style="margin-top:8px;font-size:14px;">Happy Birthday! 좋은 일만 가득하길 바라요 :)</figcaption>
-      </figure>
-    </section>
-
-    <section class="card" id="overview">
-      <h2>0. 이번 주 한눈에 보기</h2>
-      <div class="table-wrap"><table>
-        <thead><tr><th>단원</th><th>질문</th><th>주로 하는 일</th><th>대표 도구(사이킷런)</th></tr></thead>
-        <tbody>
-          <tr><td>05-1 결정 트리</td><td>데이터를 어떤 질문 순서로 나누면 좋을까?</td><td><strong>분류/회귀</strong>, 규칙 해석, 특성 중요도 확인</td><td><code>DecisionTreeClassifier</code>, <code>plot_tree</code></td></tr>
-          <tr><td>05-2 교차 검증·그리드 서치</td><td>모델 성능을 믿을 수 있게 평가하고 최적 설정은 어떻게 찾을까?</td><td><strong>성능 평가</strong>, 하이퍼파라미터 튜닝</td><td><code>train_test_split</code>, <code>cross_validate</code>, <code>StratifiedKFold</code>, <code>GridSearchCV</code>, <code>RandomizedSearchCV</code></td></tr>
-          <tr><td>05-3 트리의 앙상블</td><td>나무 한 그루보다 숲이 왜 더 좋을까?</td><td><strong>정형 데이터 분류/회귀 성능 향상</strong></td><td><code>RandomForestClassifier</code>, <code>ExtraTreesClassifier</code>, <code>GradientBoostingClassifier</code>, <code>HistGradientBoostingClassifier</code></td></tr>
-        </tbody>
-      </table></div>
-      <div class="grid">
-        <div class="note"><strong>판별(분류, Classification)</strong><br>샘플이 어떤 범주(클래스)에 속하는지 예측합니다. 예: 와인 종류(레드/화이트), 질병 유무, 스팸 여부, 고객 이탈 여부</div>
-        <div class="note"><strong>예측(회귀, Regression)</strong><br>연속적인 숫자 값을 예측합니다. 예: 집값, 매출, 온도, 수요량 (이번 주 실습은 분류 중심이지만 트리/앙상블은 회귀 버전도 제공)</div>
-      </div>
-    </section>
-
-    <section class="card" id="ch05-1">
-      <h2>1. 05-1 결정 트리 (Decision Tree)</h2>
-
-      <h3>1.1 개념 정리</h3>
-      <ul>
-        <li><strong>결정 트리</strong>: 스무고개처럼 <strong>예/아니오 질문</strong>을 순서대로 던져 데이터를 나누고 최종 답(클래스/값)을 결정하는 알고리즘입니다.</li>
-        <li><strong>왜 이해하기 쉬운가</strong>: 로지스틱 회귀는 계수(가중치)로 판단 근거가 표현되어 해석이 상대적으로 어렵지만, 결정 트리는 "당도 ≤ 1.625인가?" 같은 <strong>규칙</strong>으로 표현되어 사람이 읽기 쉽습니다.</li>
-        <li><strong>표준화(스케일링) 불필요</strong>: 분할 기준이 값의 절대 크기가 아니라 <strong>클래스 비율로 계산한 불순도</strong>이므로, <code>alcohol</code>, <code>sugar</code>, <code>pH</code>처럼 단위/범위가 달라도 표준화 여부와 결과가 같습니다. 원본 스케일을 쓰면 규칙 해석도 더 쉽습니다.</li>
-      </ul>
-
-      <h3>1.2 트리의 구성 요소</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>용어</th><th>뜻</th><th>쉬운 예시</th></tr></thead>
-        <tbody>
-          <tr><td><strong>노드(Node)</strong></td><td>데이터를 나누는 질문(조건)이 담긴 상자</td><td>"당도 ≤ 1.625?"</td></tr>
-          <tr><td><strong>루트 노드(Root)</strong></td><td>맨 위 시작 노드, 전체 데이터가 들어 있음</td><td>첫 번째 질문</td></tr>
-          <tr><td><strong>리프 노드(Leaf)</strong></td><td>더 이상 나누지 않는 끝 노드, 여기서 예측 결정</td><td>"화이트 와인으로 예측"</td></tr>
-          <tr><td><strong>가지(Branch)</strong></td><td>질문의 결과(예/아니오)를 따라 내려가는 경로</td><td>조건 만족/불만족 경로</td></tr>
-          <tr><td><strong>깊이(Depth)</strong></td><td>루트에서 특정 노드까지의 단계 수</td><td>질문을 몇 번 거쳤는지</td></tr>
-        </tbody>
-      </table></div>
-      <p><code>plot_tree()</code> 노드에는 보통 <strong>테스트 조건</strong>, <strong>불순도(gini/entropy)</strong>, <strong>샘플 수(samples)</strong>, <strong>클래스별 샘플 수(value)</strong>가 표시됩니다.</p>
-
-      <h3>1.3 불순도(Impurity): 질문을 고르는 기준</h3>
-      <p>노드 안의 데이터가 얼마나 섞여 있는지를 수치화한 것입니다. 트리는 <strong>불순도를 가장 많이 줄이는 질문</strong>을 선택합니다.</p>
-      <h4>지니 불순도 (Gini, 기본값)</h4>
-      <ul>
-        <li><strong>공식</strong>: Gini = 1 - Σ(클래스 비율)² &nbsp; (이진 분류: 1 - (p<sub>음성</sub>² + p<sub>양성</sub>²))</li>
-        <li><strong>해석</strong>: 한 클래스만 있으면 <strong>0</strong>(완전 순수), 반반 섞이면 <strong>0.5</strong>(이진 분류에서 최악)</li>
-        <li><strong>쉬운 예시(피자)</strong>: 피자 100조각이 한 사람 것(100:0)이면 헷갈릴 게 없고(0), 두 사람이 50:50이면 집을 때마다 헷갈립니다(0.5). 트리는 덜 헷갈리는 쪽으로 나눕니다.</li>
-        <li><strong>와인 루트 노드 예</strong>: 레드 1258, 화이트 3939, 총 5197 → 1 - ((1258/5197)² + (3939/5197)²) ≈ 0.367</li>
-      </ul>
-      <h4>엔트로피 불순도 (Entropy)</h4>
-      <ul>
-        <li><strong>공식</strong>: Entropy = -Σ(클래스 비율 × log₂(클래스 비율))</li>
-        <li><code>criterion='entropy'</code>로 사용합니다. 의미는 지니와 유사하며 보통 결과 차이는 크지 않습니다.</li>
-      </ul>
-
-      <h3>1.4 정보 이득(Information Gain)</h3>
-      <ul>
-        <li><strong>의미</strong>: 부모 노드가 자식 노드로 나뉘면서 불순도가 얼마나 줄었는지.</li>
-        <li><strong>공식</strong>: 정보 이득 = 부모 불순도 - (왼쪽 샘플비율 × 왼쪽 불순도) - (오른쪽 샘플비율 × 오른쪽 불순도)</li>
-        <li><strong>선택 원리</strong>: 가능한 특성과 기준값 조합 중 <strong>정보 이득이 최대</strong>가 되는 분할을 선택합니다.</li>
-        <li><strong>쉬운 예시</strong>: 반 전체를 두 모둠으로 나눌 때 "안경 착용 여부"보다 "수학 점수 80점 기준"이 모둠별 성향을 더 뚜렷하게 나누면 후자의 정보 이득이 더 큽니다.</li>
-      </ul>
-
-      <h3>1.5 과대적합과 가지치기(Pruning)</h3>
-      <ul>
-        <li><strong>과대적합 징후</strong>: 훈련 점수는 매우 높지만(예: 0.997) 테스트 점수는 낮음(예: 0.859) → 훈련 데이터의 잡음까지 외운 상태.</li>
-        <li><strong>가지치기</strong>: 트리 성장을 제한해 일반화 성능을 높입니다.
-          <ul>
-            <li>대표: <code>max_depth</code>(최대 깊이) 제한. 예) <code>max_depth=3</code> → 훈련 점수는 내려가지만 훈련/테스트 격차가 줄고 해석이 쉬워짐.</li>
-            <li>그 외: <code>min_samples_split</code>, <code>min_samples_leaf</code>, <code>min_impurity_decrease</code> 등</li>
-          </ul>
-        </li>
-      </ul>
-      <pre><code class="language-python">dt = DecisionTreeClassifier(max_depth=3, random_state=42)
-dt.fit(train_input, train_target)
-print(dt.score(train_input, train_target))  # 0.8455
-print(dt.score(test_input, test_target))    # 0.8415</code></pre>
-
-      <h3>1.6 특성 중요도(Feature Importance)</h3>
-      <ul>
-        <li><code>feature_importances_</code>: 각 특성이 <strong>불순도 감소에 기여한 정도</strong> (합 = 1).</li>
-        <li>와인 예시: <code>[alcohol, sugar, pH] = [0.123, 0.869, 0.008]</code> → <strong>당도(sugar)</strong>가 가장 중요.</li>
-        <li><strong>활용</strong>: 중요한 변수 파악, 불필요한 특성 후보 확인, 모델 해석/보고.</li>
-      </ul>
-
-      <h3>1.7 실제로는 어디에, 무엇을 판별/예측하는 데 쓰이나?</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>분야</th><th>입력(특성) 예시</th><th>판별/예측 대상</th><th>왜 결정 트리를 쓰나</th></tr></thead>
-        <tbody>
-          <tr><td>식품/품질</td><td>당도, 산도, 알코올 도수</td><td>와인 종류/등급 분류</td><td>규칙이 명확해 품질 기준 설명 가능</td></tr>
-          <tr><td>의료(보조)</td><td>검사 수치, 증상 유무</td><td>질환 위험군 분류, 검사 필요 여부</td><td>판단 경로를 설명하기 쉬움</td></tr>
-          <tr><td>금융</td><td>소득, 거래 패턴, 연체 이력</td><td>대출 승인/거절, 이상거래 여부</td><td>의사결정 근거(규칙) 제시 용이</td></tr>
-          <tr><td>마케팅/CRM</td><td>이용 횟수, 구매 금액, 접속 패턴</td><td>고객 이탈(churn) 여부</td><td>이탈 조건을 세그먼트 규칙으로 파악</td></tr>
-          <tr><td>운영/제조</td><td>센서 값, 공정 조건</td><td>불량/정상 판별, 고장 징후</td><td>현장 규칙으로 변환하기 쉬움</td></tr>
-        </tbody>
-      </table></div>
-      <blockquote>단일 결정 트리는 데이터 변화에 민감하고 과대적합되기 쉬워, 실무에서는 <strong>앙상블(05-3)</strong>로 성능과 안정성을 높이는 경우가 많습니다.</blockquote>
-
-      <h3>1.8 (참고) 이번 주 사용된 주요 코드</h3>
-      <pre><code class="language-python">import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier, plot_tree
-
-wine = pd.read_csv('https://bit.ly/wine_csv_data')
-data = wine[['alcohol', 'sugar', 'pH']].to_numpy()
-target = wine['class'].to_numpy()
-train_input, test_input, train_target, test_target = train_test_split(
-    data, target, test_size=0.2, random_state=42)
-
-dt = DecisionTreeClassifier(max_depth=3, random_state=42)
-dt.fit(train_input, train_target)
-print(dt.score(train_input, train_target), dt.score(test_input, test_target))
-print(dt.feature_importances_)</code></pre>
-    </section>
-
-    <section class="card" id="ch05-2">
-      <h2>2. 05-2 교차 검증과 그리드 서치</h2>
-
-      <h3>2.1 검증 세트가 필요한 이유</h3>
-      <ul>
-        <li><strong>문제</strong>: 하이퍼파라미터를 바꿔가며 <strong>테스트 세트로</strong> 비교하면 테스트 세트에 모델 선택이 맞춰져 최종 평가 의미가 오염됩니다.</li>
-        <li><strong>원칙</strong>: <strong>테스트 세트는 마지막에 딱 한 번</strong>만 사용.</li>
-        <li><strong>해결</strong>: 훈련 세트를 다시 나눠 <strong>검증 세트(validation set)</strong>를 만들어 튜닝에 사용합니다.</li>
-      </ul>
-      <div class="table-wrap"><table>
-        <thead><tr><th>구분</th><th>역할</th></tr></thead>
-        <tbody>
-          <tr><td>훈련(sub/train) 세트</td><td>모델 학습</td></tr>
-          <tr><td>검증(validation) 세트</td><td>하이퍼파라미터 비교·선택</td></tr>
-          <tr><td>테스트(test) 세트</td><td>최종 성능 확인(마지막 1회)</td></tr>
-        </tbody>
-      </table></div>
-
-      <h3>2.2 교차 검증(Cross Validation)</h3>
-      <ul>
-        <li><strong>개념</strong>: 훈련 세트를 <strong>k개의 폴드(fold)</strong>로 나누고, 각 폴드를 한 번씩 검증 세트로 쓰며 k번 평가한 뒤 평균을 사용합니다.</li>
-        <li><strong>장점</strong>: 한 번 분할보다 평가가 안정적이고, 검증 데이터를 크게 떼어 놓는 낭비를 줄입니다.</li>
-        <li><strong>쉬운 예시</strong>: 모의고사를 한 번만 보면 컨디션에 흔들리지만 여러 번 보면 실력을 안정적으로 가늠할 수 있습니다. 교차 검증은 "<strong>여러 번 나눠 보는 모의고사</strong>"입니다.</li>
-        <li><strong>주의</strong>: <code>cross_validate</code> 결과의 <code>test_score</code> 키는 <strong>검증 폴드 점수</strong>를 의미합니다(최종 테스트 세트 아님).</li>
-        <li><strong>분류 데이터</strong>: 클래스 비율을 유지하는 <strong>StratifiedKFold</strong>를 주로 사용합니다.</li>
-      </ul>
-      <pre><code class="language-python">from sklearn.model_selection import cross_validate, StratifiedKFold
-import numpy as np
-
-scores = cross_validate(dt, train_input, train_target)  # 기본 5-폴드
-print(np.mean(scores['test_score']))
-
-splitter = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
-scores = cross_validate(dt, train_input, train_target, cv=splitter)</code></pre>
-
-      <h3>2.3 하이퍼파라미터 튜닝</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>구분</th><th>설명</th><th>예시</th></tr></thead>
-        <tbody>
-          <tr><td><strong>모델 파라미터</strong></td><td>학습 과정에서 데이터로부터 모델이 찾는 값</td><td>트리의 분할 규칙/구조, 선형모델 계수 등</td></tr>
-          <tr><td><strong>하이퍼파라미터</strong></td><td>사용자가 학습 전에 지정하는 값</td><td><code>max_depth</code>, <code>min_samples_split</code>, <code>n_estimators</code>, <code>learning_rate</code></td></tr>
-        </tbody>
-      </table></div>
-      <p><strong>중요:</strong> 하이퍼파라미터는 서로 영향을 주므로 여러 매개변수를 함께 탐색해야 합니다.</p>
-
-      <h3>2.4 그리드 서치 (GridSearchCV)</h3>
-      <ul>
-        <li><strong>개념</strong>: 탐색할 값의 <strong>모든 조합(격자)</strong>에 대해 교차 검증을 수행해 최적 조합을 찾습니다.</li>
-        <li><strong>비용</strong>: 조합 수 × 폴드 수만큼 학습합니다. (예: 9×15×10=1350 조합, 5-폴드 → 6750번)</li>
-        <li><strong>주요 요소</strong>: <code>best_params_</code>, <code>best_estimator_</code>(전체 훈련 세트로 재학습), <code>cv_results_</code>, <code>n_jobs=-1</code></li>
-      </ul>
-      <pre><code class="language-python">from sklearn.model_selection import GridSearchCV
-params = {'min_impurity_decrease': np.arange(0.0001, 0.001, 0.0001),
-          'max_depth': range(5, 20, 1),
-          'min_samples_split': range(2, 100, 10)}
-gs = GridSearchCV(DecisionTreeClassifier(random_state=42), params, n_jobs=-1)
-gs.fit(train_input, train_target)
-print(gs.best_params_)</code></pre>
-
-      <h3>2.5 랜덤 서치 (RandomizedSearchCV)</h3>
-      <ul>
-        <li><strong>개념</strong>: 확률 분포에서 하이퍼파라미터를 무작위 샘플링해 탐색합니다.</li>
-        <li><strong>언제 유용한가</strong>: 탐색 범위가 넓거나 연속적일 때, 제한된 횟수(<code>n_iter</code>)로 유망 영역을 효율적으로 찾을 수 있습니다.</li>
-        <li><strong>분포 예시</strong>: <code>randint(a,b)</code>(정수), <code>uniform(loc, scale)</code>(실수)</li>
-      </ul>
-      <pre><code class="language-python">from scipy.stats import randint, uniform
-from sklearn.model_selection import RandomizedSearchCV
-
-params = {'min_impurity_decrease': uniform(0.0001, 0.001),
-          'max_depth': randint(20, 50),
-          'min_samples_split': randint(2, 25),
-          'min_samples_leaf': randint(1, 25)}
-gs = RandomizedSearchCV(DecisionTreeClassifier(random_state=42), params,
-                        n_iter=100, n_jobs=-1, random_state=42)
-gs.fit(train_input, train_target)</code></pre>
-
-      <h3>2.6 실제로는 어디에 쓰이나?</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>상황</th><th>활용</th></tr></thead>
-        <tbody>
-          <tr><td>의료/금융/품질 판별</td><td>오판 비용이 큰 문제에서 교차 검증 평균으로 신뢰성 있게 성능 판단</td></tr>
-          <tr><td>분류기 운영 튜닝</td><td>스팸, 이탈, 불량 판별 모델의 <code>max_depth</code>, 학습률, 트리 수 등을 데이터에 맞게 탐색</td></tr>
-          <tr><td>과대적합 점검</td><td>훈련 점수 vs 검증 점수 비교로 모델 복잡도 조절</td></tr>
-          <tr><td>탐색 전략</td><td>넓은 범위는 랜덤 서치 → 좁은 범위는 그리드 서치로 정밀화</td></tr>
-        </tbody>
-      </table></div>
-    </section>
-
-    <section class="card" id="ch05-3">
-      <h2>3. 05-3 트리의 앙상블 (Ensemble Learning)</h2>
-
-      <h3>3.1 배경: 정형 데이터와 비정형 데이터</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>구분</th><th>형태</th><th>예시</th><th>잘 맞는 모델 경향</th></tr></thead>
-        <tbody>
-          <tr><td><strong>정형 데이터(Structured)</strong></td><td>행/열 구조의 표 형태</td><td>CSV, DB, 엑셀(수치·범주 컬럼)</td><td>결정 트리 기반 모델, <strong>앙상블</strong>이 강력한 성능을 내는 경우가 많음</td></tr>
-          <tr><td><strong>비정형 데이터(Unstructured)</strong></td><td>고정된 표 구조로 다루기 어려움</td><td>텍스트, 이미지, 음성</td><td>신경망/딥러닝 계열이 주로 활용됨</td></tr>
-        </tbody>
-      </table></div>
-      <p>와인 데이터(알코올 도수, 당도, pH → 클래스)는 정형 데이터이며, 앙상블 학습이 좋은 성과를 내기 쉬운 영역입니다.</p>
-
-      <h3>3.2 앙상블 학습이란?</h3>
-      <ul>
-        <li><strong>정의</strong>: 여러 개의 모델(주로 결정 트리)을 함께 학습·결합해 더 좋은 예측을 만드는 방법.</li>
-        <li><strong>직관</strong>: "나무 한 그루보다 숲을 본다." 한 트리는 불안정하거나 과대적합되기 쉽지만, 여러 트리의 의견을 모으면 오류가 상쇄되어 일반화 성능과 안정성이 높아질 수 있습니다.</li>
-        <li><strong>결합 방식</strong>: 분류는 다수결/평균 확률, 회귀는 예측값 평균을 주로 사용합니다.</li>
-        <li><strong>대표 방식</strong>: <span class="pill">배깅</span> 독립 모델 결합(랜덤 포레스트, 엑스트라 트리) / <span class="pill">부스팅</span> 오차를 순차 보완(그레이디언트 부스팅, 히스토그램 기반 부스팅)</li>
-      </ul>
-
-      <h3>3.3 랜덤 포레스트 (Random Forest)</h3>
-      <p class="muted">랜덤하게 만든 결정 트리들의 숲 (기본 100개 트리)</p>
-      <h4>개념</h4>
-      <ul>
-        <li><strong>부트스트랩 샘플(Bootstrap)</strong>: 훈련 세트에서 <strong>중복 허용</strong>으로 같은 크기의 샘플을 뽑아 각 트리를 학습합니다. 일부 샘플은 여러 번, 일부는 제외될 수 있습니다.</li>
-        <li><strong>특성 부분 선택</strong>: 각 노드 분할 시 전체 특성 중 일부를 무작위로 고른 뒤 그 안에서 최선 분할을 찾습니다. (분류 기본: 특성 수의 제곱근, 회귀: 보통 전체 특성)</li>
-        <li><strong>예측 결합</strong>: 분류는 클래스별 확률 평균, 회귀는 예측값 평균.</li>
-      </ul>
-      <h4>OOB(Out-of-Bag) 점수</h4>
-      <ul>
-        <li>부트스트랩에서 각 트리에 포함되지 않은 샘플(OOB)을 해당 트리의 검증처럼 사용해 평균 낸 점수(<code>oob_score=True</code>).</li>
-        <li>교차 검증을 보완하는 지표로 활용 가능하며 훈련 데이터를 더 효율적으로 쓸 수 있습니다.</li>
-      </ul>
-      <h4>장단점과 쓰임</h4>
-      <ul>
-        <li><strong>장점</strong>: 기본 설정에서도 준수한 성능, 과대적합 완화, 병렬 학습 용이(<code>n_jobs=-1</code>), 분류/회귀 가능.</li>
-        <li><strong>단점</strong>: 단일 트리보다 해석이 어렵고, 트리가 많으면 메모리/예측 시간 증가.</li>
-        <li><strong>판별/예측 예</strong>: 고객 이탈 판별, 대출 부도 위험 분류, 질병 위험도 분류, 수요/가격 예측.</li>
-      </ul>
-      <pre><code class="language-python">from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_validate
-
-rf = RandomForestClassifier(n_jobs=-1, random_state=42)
-scores = cross_validate(rf, train_input, train_target,
-                        return_train_score=True, n_jobs=-1)
-rf.fit(train_input, train_target)
-print(rf.feature_importances_)
-
-rf = RandomForestClassifier(oob_score=True, n_jobs=-1, random_state=42)
-rf.fit(train_input, train_target)
-print(rf.oob_score_)</code></pre>
-
-      <h3>3.4 엑스트라 트리 (Extra Trees)</h3>
-      <p class="muted">Extremely Randomized Trees — 더 무작위한 앙상블</p>
-      <div class="table-wrap"><table>
-        <thead><tr><th>항목</th><th>랜덤 포레스트</th><th>엑스트라 트리</th></tr></thead>
-        <tbody>
-          <tr><td>학습 샘플</td><td>부트스트랩 샘플(중복 허용)</td><td><strong>전체 훈련 세트</strong> 사용(기본)</td></tr>
-          <tr><td>노드 분할</td><td>후보 중 <strong>최선의 분할</strong> 탐색</td><td>후보 중 <strong>무작위 분할</strong> 선택</td></tr>
-          <tr><td>무작위성/속도</td><td>보통</td><td>더 크고, 분할 탐색이 단순해 빠를 수 있음</td></tr>
-          <tr><td>트리 수</td><td>기본 100</td><td>무작위성 보완 위해 더 많을수록 유리할 수 있음</td></tr>
-        </tbody>
-      </table></div>
-      <ul>
-        <li><strong>직관</strong>: 개별 트리 분할이 다소 엉성해도 많은 트리를 앙상블하면 과대적합을 줄이고 성능을 확보할 수 있습니다.</li>
-        <li><strong>쓰임</strong>: 랜덤 포레스트와 유사한 정형 데이터 분류/회귀, 빠른 실험이 필요할 때. (회귀: <code>ExtraTreesRegressor</code>)</li>
-      </ul>
-      <pre><code class="language-python">from sklearn.ensemble import ExtraTreesClassifier
-et = ExtraTreesClassifier(n_jobs=-1, random_state=42)
-scores = cross_validate(et, train_input, train_target,
-                        return_train_score=True, n_jobs=-1)</code></pre>
-
-      <h3>3.5 그레이디언트 부스팅 (Gradient Boosting)</h3>
-      <p class="muted">이전 트리의 오차를 순차적으로 보완하는 앙상블</p>
-      <h4>개념</h4>
-      <ul>
-        <li><strong>순차적 학습</strong>: 새 트리가 이전 앙상블의 <strong>오차(손실)</strong>를 줄이는 방향으로 추가됩니다.</li>
-        <li><strong>얕은 트리</strong>: 기본적으로 깊이가 얕은 결정 트리(예: <code>max_depth=3</code>)를 여러 개(기본 100개) 누적합니다.</li>
-        <li><strong>경사 하강법과 연결</strong>: 분류는 로지스틱 손실, 회귀는 MSE 등을 줄이는 방향으로 모델을 업데이트합니다.</li>
-        <li><strong>학습률(<code>learning_rate</code>)</strong>: 각 트리의 기여 크기 조절. 작으면 천천히(더 많은 트리 필요), 크면 빠르지만 불안정/과적합 위험 증가.</li>
-        <li><strong>주요 파라미터</strong>: <code>n_estimators</code>, <code>learning_rate</code>, <code>max_depth</code>, <code>subsample</code>(1 미만이면 일부 샘플만 사용).</li>
-      </ul>
-      <h4>장단점과 쓰임</h4>
-      <ul>
-        <li><strong>장점</strong>: 정형 데이터에서 높은 예측 성능을 내는 경우가 많고, 얕은 트리로 과대적합에 비교적 강함.</li>
-        <li><strong>단점</strong>: 순차 학습으로 병렬화가 어렵고(사이킷런 GB는 <code>n_jobs</code> 없음) 상대적으로 느릴 수 있음.</li>
-        <li><strong>판별/예측 예</strong>: 신용 평가, 사기 탐지, 클릭/전환 예측, 위험 점수화.</li>
-      </ul>
-      <pre><code class="language-python">from sklearn.ensemble import GradientBoostingClassifier
-gb = GradientBoostingClassifier(random_state=42)
-# 성능 향상 예시: gb = GradientBoostingClassifier(n_estimators=500, learning_rate=0.2, random_state=42)
-scores = cross_validate(gb, train_input, train_target,
-                        return_train_score=True, n_jobs=-1)</code></pre>
-
-      <h3>3.6 히스토그램 기반 그레이디언트 부스팅 (Histogram-based Gradient Boosting)</h3>
-      <p class="muted">그레이디언트 부스팅을 더 빠르고 실용적으로 만든 방식</p>
-      <h4>개념</h4>
-      <ul>
-        <li><strong>구간화(Binning)</strong>: 연속형 특성을 <strong>256개 구간(빈)</strong>으로 나눠 분할 후보를 제한하므로 최적 분할 탐색이 매우 빠릅니다.</li>
-        <li><strong>누락값 처리</strong>: 누락값을 위한 구간을 활용해 별도 전처리 없이 학습 가능한 경우가 많습니다.</li>
-        <li><strong>반복 횟수</strong>: 사이킷런 구현에서는 <code>n_estimators</code> 대신 <strong><code>max_iter</code></strong>(부스팅 반복 횟수)를 사용합니다.</li>
-        <li><strong>순열 중요도(Permutation Importance)</strong>: 특성을 무작위로 섞었을 때 성능 변화를 측정해 중요도를 계산합니다(훈련/테스트 모두 적용 가능).</li>
-      </ul>
-      <h4>관련 라이브러리</h4>
-      <ul>
-        <li><strong>사이킷런</strong>: <code>HistGradientBoostingClassifier</code> / <code>HistGradientBoostingRegressor</code> (구버전은 <code>enable_hist_gradient_boosting</code> 임포트 필요할 수 있음)</li>
-        <li><strong>XGBoost</strong>: <code>XGBClassifier(tree_method='hist')</code> 등 다양한 부스팅 옵션 제공</li>
-        <li><strong>LightGBM</strong>: 마이크로소프트의 고성능 구현, 빠르고 널리 사용됨</li>
-      </ul>
-      <pre><code class="language-python">from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.inspection import permutation_importance
-
-hgb = HistGradientBoostingClassifier(random_state=42)
-scores = cross_validate(hgb, train_input, train_target, return_train_score=True)
-hgb.fit(train_input, train_target)
-result = permutation_importance(hgb, test_input, test_target,
-                                n_repeats=10, random_state=42, n_jobs=-1)
-print(result.importances_mean)
-
-# 외부 라이브러리 예시
-# from xgboost import XGBClassifier
-# xgb = XGBClassifier(tree_method='hist', random_state=42)
-# from lightgbm import LGBMClassifier
-# lgb = LGBMClassifier(random_state=42)</code></pre>
-
-      <h3>3.7 앙상블 모델 비교 요약</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>모델</th><th>학습 방식</th><th>랜덤성/특징</th><th>속도·병렬성</th><th>대표 강점</th></tr></thead>
-        <tbody>
-          <tr><td><strong>Random Forest</strong></td><td>배깅(독립 트리)</td><td>부트스트랩 + 특성 부분 선택</td><td>병렬화 용이</td><td>튼튼한 기본 모델, OOB 활용</td></tr>
-          <tr><td><strong>Extra Trees</strong></td><td>배깅 계열(독립 트리)</td><td>전체 샘플 + 무작위 분할</td><td>분할 단순, 빠를 수 있음</td><td>속도, 강한 무작위성</td></tr>
-          <tr><td><strong>Gradient Boosting</strong></td><td>부스팅(순차 보완)</td><td>이전 오차를 줄이는 얕은 트리 추가</td><td>순차 학습으로 느릴 수 있음</td><td>높은 예측 성능</td></tr>
-          <tr><td><strong>HistGradientBoosting</strong></td><td>부스팅(히스토그램 기반)</td><td>256-bin 분할, 결측값 처리 편의</td><td>GB 대비 매우 빠름</td><td>속도·성능·결측 처리 균형</td></tr>
-        </tbody>
-      </table></div>
-
-      <h3>3.8 실제로 무엇을 판별/예측하는 데 쓰이나?</h3>
-      <div class="table-wrap"><table>
-        <thead><tr><th>과제 유형</th><th>예시 질문(판별/예측)</th><th>적합한 이유</th></tr></thead>
-        <tbody>
-          <tr><td>이진/다중 분류</td><td>고객 이탈 여부, 거래 사기 여부, 와인 레드/화이트 판별</td><td>정형 특성의 비선형 관계·상호작용 포착에 강함</td></tr>
-          <tr><td>회귀</td><td>수요량, 주택 가격, 매출 예측</td><td>여러 트리의 평균/보완으로 안정적 수치 예측</td></tr>
-          <tr><td>위험 점수화</td><td>부도/사고/불량 발생 확률</td><td>확률/점수 출력 및 중요 특성 분석에 활용 가능</td></tr>
-          <tr><td>특성 영향 분석</td><td>어떤 변수가 결과에 가장 큰 영향을 주는가</td><td><code>feature_importances_</code>, 순열 중요도로 해석 단서 제공</td></tr>
-        </tbody>
-      </table></div>
-      <div class="note"><strong>실무 흐름 예시:</strong> 데이터 분할 → 교차 검증으로 기준 성능 확인 → 랜덤 포레스트 등 베이스라인 → 그리드/랜덤 서치로 튜닝 → 최종 테스트 1회 평가</div>
-    </section>
-
-    <section class="card" id="summary">
-      <h2>4. 6주차 스터디 요약</h2>
-      <ul>
-        <li><strong>결정 트리</strong>: 스무고개식 규칙 모델. <strong>불순도(지니/엔트로피)</strong>를 줄이는 분할과 <strong>정보 이득</strong> 최대화로 질문을 선택합니다. 해석과 특성 중요도 분석이 쉽고 <strong>표준화가 필요 없지만</strong>, 깊이 제한이 없으면 과대적합되기 쉽습니다.</li>
-        <li><strong>교차 검증/튜닝</strong>: 테스트 세트를 보호하기 위해 <strong>검증 세트/교차 검증</strong>으로 평가하고, <strong>GridSearchCV/RandomizedSearchCV</strong>로 하이퍼파라미터를 체계적으로 탐색합니다.</li>
-        <li><strong>앙상블</strong>: 여러 트리를 결합해 단일 트리보다 안정적이고 높은 성능을 노립니다. <strong>랜덤 포레스트/엑스트라 트리</strong>는 병렬적 다양성(배깅), <strong>그레이디언트 부스팅/히스토그램 기반 부스팅</strong>은 순차적 오차 보완(부스팅)이 입니다.</li>
-        <li><strong>정형 데이터의 분류·회귀</strong>에서 앙상블 트리 모델은 강력한 선택지이며, 목표는 높은 성능뿐 아니라 <strong>일반화 성능을 믿을 수 있게 확보</strong>하는 것입니다.</li>
-      </ul>
-    </section>
-
-    <footer>
-      6주차 스터디 자료 · 결정 트리 / 교차 검증과 그리드 서치 / 트리의 앙상블<br>
-      <span class="muted">혼자 공부하는 머신러닝+딥러닝 Chapter 05-1, 05-2, 05-3 기반 정리</span>
-    </footer>
-  </main>
+<div class="wrap">
+  <div class="content">
+<h1 id="05-3">05-3 트리의 앙상블 정리 + 좌표 보정 실험 개요</h1>
+<blockquote>
+<p>혼공머신 05-3 내용 정리(코드보다 내용 위주) / <code>AID실험보고서_정리본.docx</code> 기반 실험 정리</p>
+</blockquote>
+<hr />
+<h2 id="1-05-3">1. 혼공머신 05-3 「트리의 앙상블」 정리</h2>
+<h3 id="1-1">1-1. 앙상블 학습이란</h3>
+<p>이사님이 "베스트 머신러닝 알고리즘을 찾아 보고"하라고 하자, 홍 선배가 엘리베이터에서 <strong>"나무 말고 숲을 봐"</strong>라는 알쏭달쏭한 한 마디를 남깁니다. 검색해 보니 <strong>랜덤 포레스트(Random Forest)</strong>라는 알고리즘이 보입니다.</p>
+<p>다만 "가장 좋은 알고리즘"이 따로 있는 것은 아닙니다. 문제마다 다를 수 있고, 보편적으로 성능이 좋아도 미리 단정해서는 안 됩니다.</p>
+<p><strong>앙상블 학습</strong>은 여러 개의 모델을 훈련시키고 각 모델의 예측을 취합하여 최종 결과를 만드는 학습 방식입니다.</p>
+<ul>
+<li>쉬운 예시: 어려운 시험을 한 사람만 풀면 실수할 수 있지만, 여러 사람이 각자 풀고 <strong>다수결</strong>로 답을 정하면 개인의 실수가 서로 상쇄되어 더 정확해집니다. 앙상블도 같은 원리입니다.</li>
+<li><strong>분류</strong>: 각 트리의 클래스별 확률을 평균하거나 다수결로 최종 클래스를 결정합니다.</li>
+<li><strong>회귀</strong>: 각 트리의 예측값을 평균합니다.</li>
+</ul>
+<p>큰 흐름은 두 가지입니다.</p>
+<table>
+<thead>
+<tr>
+<th>흐름</th>
+<th>방식</th>
+<th>대표 알고리즘</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>배깅(Bagging)</strong></td>
+<td>트리를 독립적으로 만들어 평균·투표</td>
+<td>랜덤 포레스트, 엑스트라 트리</td>
+</tr>
+<tr>
+<td><strong>부스팅(Boosting)</strong></td>
+<td>트리를 순서대로 추가하며 이전 모델의 오차를 보완</td>
+<td>그레이디언트 부스팅, 히스토그램 기반 부스팅</td>
+</tr>
+</tbody>
+</table>
+<h3 id="1-2">1-2. 정형 데이터와 비정형 데이터</h3>
+<p>지금까지 다룬 생선의 길이·높이·무게나 와인의 알코올 도수·당도·pH는 CSV에 가지런히 정리되어 있습니다. 이처럼 행과 열로 구조화된 데이터를 <strong>정형 데이터(structured data)</strong>라고 부르며, CSV·데이터베이스·엑셀로 저장하기 쉽습니다. 프로그래머가 다루는 대부분의 데이터가 여기에 해당하고, 앙상블 학습은 이 정형 데이터에서 특히 뛰어난 성능을 냅니다.</p>
+<p>반대로 이 책의 글 같은 텍스트, 디지털카메라 사진, 음악 파일처럼 표로 표현하기 어려운 데이터를 <strong>비정형 데이터(unstructured data)</strong>라고 합니다. 규칙성을 찾기 어려워 전통적인 머신러닝으로는 모델을 만들기 까다롭고, 7장에서 배울 신경망 알고리즘이 주로 사용됩니다.</p>
+<blockquote>
+<p>참고: 텍스트나 사진도 데이터베이스에 저장할 수는 있습니다(NoSQL 등). 여기서는 보편적인 사례를 구분한 것입니다.</p>
+</blockquote>
+<h3 id="1-3">1-3. 랜덤 포레스트 — 대표 주자</h3>
+<p>랜덤 포레스트는 결정 트리를 랜덤하게 만들어 <strong>나무의 숲</strong>을 만들고, 각 결정 트리의 예측을 사용해 최종 예측을 만듭니다. 기본적으로 <strong>100개의 결정 트리</strong>를 사용하며, 안정적인 성능 덕분에 앙상블을 적용할 때 <strong>가장 먼저 시도해 보길 권하는 알고리즘</strong>입니다.</p>
+<h4 id="1-bootstrap-sample">어려운 점 ① 부트스트랩 샘플(Bootstrap Sample)이 무엇이고 왜 필요한가?</h4>
+<p>각 트리를 훈련하기 위한 데이터를 원본 훈련 데이터에서 랜덤하게 뽑는데, 이때 <strong>뽑았던 샘플을 다시 가방에 넣고 또 뽑습니다.</strong> 그래서 한 샘플이 중복되어 추출될 수 있고, 기본적으로 부트스트랩 샘플은 훈련 세트와 <strong>같은 크기</strong>로 만들어집니다.</p>
+<ul>
+<li>예: 1,000개의 샘플이 든 가방에서 1,000번 뽑으면 어떤 샘플은 여러 번 뽑히고, 어떤 샘플은 한 번도 뽑히지 않습니다.</li>
+<li>반 30명 중 30장을 뽑는다고 생각해도 쉽습니다. 뽑은 사람을 다시 넣고 뽑으므로 3번 뽑히는 사람도, 한 번도 안 뽑히는 사람도 생깁니다.</li>
+<li><strong>왜 하나요?</strong> 모든 트리가 같은 데이터로 공부하면 똑같이 틀려서 앙상블의 의미가 없어집니다. 중복을 허용한 무작위 추출이 트리 사이에 <strong>다양성</strong>을 만들고, 이것이 훈련 세트 과대적합을 막고 검증·테스트 세트에서 안정적인 성능을 얻게 해 줍니다.</li>
+</ul>
+<h4 id="2">어려운 점 ② 노드마다 특성 일부를 무작위로 선택하는 이유</h4>
+<p>각 노드를 분할할 때 <strong>전체 특성 중 일부만 무작위로 고른 다음, 그 중에서 최선의 분할을 찾습니다.</strong></p>
+<ul>
+<li>분류 모델(<code>RandomForestClassifier</code>)은 기본적으로 전체 특성 개수의 <strong>제곱근</strong>만큼 선택합니다. 특성이 4개라면 노드마다 2개를 랜덤하게 고릅니다.</li>
+<li>회귀 모델(<code>RandomForestRegressor</code>)은 <strong>전체 특성</strong>을 사용합니다.</li>
+<li>와인 데이터 특성이 <code>[알코올 도수, 당도, pH]</code>라면 어떤 노드는 (당도, 알코올), 어떤 노드는 (pH, 당도)를 보고 분할을 정합니다.</li>
+<li>결과적으로 하나의 특성에 과도하게 집중하지 않고 <strong>여러 특성이 훈련에 기여할 기회</strong>를 얻어 과대적합이 줄고 일반화 성능이 높아집니다.</li>
+</ul>
+<h4 id="3-oobout-of-bag">어려운 점 ③ OOB(Out of Bag) 점수</h4>
+<p>부트스트랩 샘플을 만들 때 포함되지 않고 남는 샘플이 있습니다. 1,000개에서 중복을 허용해 1,000번 뽑으면 한 샘플이 한 번도 뽑히지 않을 확률은 약 <strong>36.8%</strong>입니다.</p>
+<p>이 남은 샘플을 <strong>마치 검증 세트처럼</strong> 써서, 부트스트랩 샘플로 훈련한 결정 트리를 평가할 수 있습니다. <code>RandomForestClassifier</code>에서 <code>oob_score=True</code>로 지정하면 각 결정 트리의 OOB 점수를 평균해 출력합니다.</p>
+<ul>
+<li>책 예제: 교차 검증 검증 점수 <strong>0.891</strong>, OOB 점수 <strong>0.893</strong>으로 거의 같은 결과.</li>
+<li>OOB 점수를 쓰면 교차 검증을 대신할 수 있어서 <strong>훈련 세트에 더 많은 샘플을 사용</strong>할 수 있습니다.</li>
+</ul>
+<h4 id="_1">결과와 해석 (책의 와인 예제)</h4>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>훈련 점수</th>
+<th>검증 점수</th>
+<th>특성 중요도 [알코올, 당도, pH]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>단일 결정 트리</td>
+<td>-</td>
+<td>-</td>
+<td><code>[0.123, 0.869, 0.008]</code> (당도에 몰림)</td>
+</tr>
+<tr>
+<td>랜덤 포레스트</td>
+<td>0.997</td>
+<td>0.891</td>
+<td><code>[0.232, 0.500, 0.268]</code> (당도 감소, 알코올·pH 증가)</td>
+</tr>
+<tr>
+<td>OOB 점수</td>
+<td>-</td>
+<td>0.893</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>단일 트리에서는 당도에 거의 몰려 있었지만, 랜덤 포레스트에서는 특성을 랜덤하게 선택한 결과 여러 특성이 고르게 기여합니다. 다소 과대적합이 보이지만 이 예제는 단순하고 특성이 적어 하이퍼파라미터 튜닝으로 크게 나아지지는 않습니다.</p>
+<h3 id="1-4">1-4. 엑스트라 트리</h3>
+<p>엑스트라 트리도 기본적으로 100개의 결정 트리를 훈련하고, 전체 특성 중 일부를 랜덤하게 선택해 노드를 분할하는 등 랜덤 포레스트와 매우 비슷합니다. 차이점은 두 가지입니다.</p>
+<ol>
+<li><strong>부트스트랩 샘플을 사용하지 않고</strong> 각 결정 트리를 만들 때 전체 훈련 세트를 사용합니다.</li>
+<li>노드를 분할할 때 <strong>가장 좋은 분할을 찾지 않고 무작위로 분할</strong>합니다. 2절 확인 문제에서 다룬 <code>DecisionTreeClassifier</code>의 <code>splitter='random'</code>이 바로 엑스트라 트리가 사용하는 결정 트리입니다.</li>
+</ol>
+<blockquote>
+<p>하나의 결정 트리에서 무작위로 분할하면 성능이 낮아지겠지만, <strong>많은 트리를 앙상블하면 과대적합을 막고 검증 세트 점수를 높이는 효과</strong>가 있습니다. 무작위로 노드를 나누기 때문에 최적 분할 탐색 계산이 줄어들어 <strong>빠른 것</strong>이 장점이고, 무작위성이 더 크므로 보통 랜덤 포레스트보다 <strong>더 많은 트리</strong>를 훈련해야 합니다.</p>
+</blockquote>
+<ul>
+<li>책 예제: 교차 검증 <code>0.997 / 0.889</code>(랜덤 포레스트와 비슷)</li>
+<li>특성 중요도: <code>[0.202, 0.522, 0.276]</code> — 결정 트리보다 당도 의존성이 작음</li>
+<li>회귀 버전: <code>ExtraTreesRegressor</code></li>
+</ul>
+<h3 id="1-5">1-5. 그레이디언트 부스팅</h3>
+<p>그레이디언트 부스팅은 <strong>깊이가 얕은 결정 트리를 사용하여 이전 트리의 오차를 보완</strong>하는 방식으로 앙상블합니다. 사이킷런의 <code>GradientBoostingClassifier</code>는 기본적으로 깊이가 3인 결정 트리를 100개 사용합니다. 랜덤 포레스트나 엑스트라 트리가 트리를 독립적으로 만드는 것과 달리, 이 방식은 <strong>트리를 순서대로 추가</strong>합니다.</p>
+<p>이름의 '그레이디언트'는 4장의 <strong>경사 하강법</strong>과 연결됩니다. 손실 함수를 산으로 생각하고 가장 낮은 곳을 찾아 내려오는데, 가중치와 절편을 조금씩 바꾸는 대신 <strong>결정 트리를 계속 추가하면서 내려갑니다.</strong> 분류에는 로지스틱 손실 함수를, 회귀에는 평균 제곱 오차 함수를 사용합니다.</p>
+<ul>
+<li>한 번에 크게 움직이면 과대적합될 수 있으므로 <strong>깊이가 얕은 트리</strong>를 쓰고, <strong>학습률</strong>로 속도를 조절합니다. 학습률 기본값은 <code>0.1</code>입니다.</li>
+<li>기본 모델 교차 검증: <code>0.888 / 0.872</code> → 과대적합이 거의 없음.</li>
+<li>트리 500개 + 학습률 0.2: <code>0.946 / 0.878</code> → 트리를 5배 늘려도 과대적합을 잘 억제.</li>
+<li><code>subsample</code>: 훈련 세트 중 일부 비율만 사용 → 확률적 경사 하강법·미니배치 경사 하강법과 비슷한 효과.</li>
+<li>특성 importance: <code>[0.159, 0.680, 0.161]</code> → 랜덤 포레스트보다 당도에 더 집중.</li>
+<li>트리를 순서대로 추가해야 해서 병렬 처리가 어렵고 <strong><code>n_jobs</code> 매개변수가 없어</strong> 훈련이 느린 편입니다. 회귀 버전은 <code>GradientBoostingRegressor</code>.</li>
+</ul>
+<h3 id="1-6">1-6. 히스토그램 기반 그레이디언트 부스팅</h3>
+<p>정형 데이터를 다루는 머신러닝 알고리즘 중 <strong>가장 인기가 높은 알고리즘</strong>입니다.</p>
+<ul>
+<li>입력 특성을 먼저 <strong>256개의 구간</strong>으로 나누기 때문에 노드를 분할할 때 최적의 분할을 매우 빠르게 찾습니다.</li>
+<li>256개 구간 중 하나를 떼어 놓고 <strong>누락된 값</strong>을 위해 사용하므로, 입력에 결측이 있어도 따로 전처리할 필요가 없습니다.</li>
+<li>사이킷런의 <code>HistGradientBoostingClassifier</code>는 트리 개수 대신 부스팅 반복 횟수를 뜻하는 <strong><code>max_iter</code></strong>를 사용합니다.</li>
+<li>책의 <code>enable_hist_gradient_boosting</code> 임포트는 사이킷런 1.0부터 <strong>불필요</strong>합니다(experimental 모듈 아래에서 벗어남).</li>
+<li>와인 데이터 교차 검증: <code>0.932 / 0.880</code> → 그레이디언트 부스팅보다 조금 높고 과대적합도 잘 억제. 테스트 정확도 <strong>0.872</strong>(2절 랜덤 서치 단일 트리 0.86).</li>
+</ul>
+<p><strong>순열 중요도(<code>permutation_importance()</code>)</strong></p>
+<p>특성을 하나씩 랜덤하게 섞어서 모델 성능이 어떻게 변하는지 관찰해 중요도를 계산합니다. 훈련·테스트 세트 모두에 적용할 수 있고, 사이킷런의 다른 추정기 모델에도 쓸 수 있습니다. <code>n_repeats</code>는 랜덤하게 섞을 횟수입니다.</p>
+<table>
+<thead>
+<tr>
+<th>데이터</th>
+<th>중요도 [알코올, 당도, pH]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>훈련 세트</td>
+<td><code>[0.089, 0.234, 0.080]</code></td>
+</tr>
+<tr>
+<td>테스트 세트</td>
+<td><code>[0.060, 0.202, 0.049]</code> → 당도에 조금 더 집중</td>
+</tr>
+</tbody>
+</table>
+<p><strong>다른 라이브러리</strong></p>
+<ul>
+<li><strong>XGBoost</strong>: <code>tree_method='hist'</code>로 히스토그램 기반 방식 사용, <code>cross_validate()</code>와 함께 사용 가능. 책 결과 <code>0.956 / 0.880</code>.</li>
+<li><strong>LightGBM</strong>: 마이크로소프트가 만든 빠르고 최신 기술이 적용된 라이브러리. 책 결과 <code>0.936 / 0.880</code>.</li>
+</ul>
+<h3 id="1-7">1-7. 네 모델 비교</h3>
+<table>
+<thead>
+<tr>
+<th>모델</th>
+<th>방식</th>
+<th>특징</th>
+<th>속도</th>
+<th>강점</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>랜덤 포레스트</td>
+<td>배깅</td>
+<td>부트스트랩 + 노드별 특성 부분 선택</td>
+<td>병렬 가능</td>
+<td>대표적이고 안정적, OOB 점수</td>
+</tr>
+<tr>
+<td>엑스트라 트리</td>
+<td>배깅 계열</td>
+<td>부트스트랩 없음 + 무작위 분할</td>
+<td>빠름</td>
+<td>강한 무작위성, 과대적합 완화</td>
+</tr>
+<tr>
+<td>그레이디언트 부스팅</td>
+<td>부스팅(순차)</td>
+<td>얕은 트리로 이전 오차 보완</td>
+<td>느림</td>
+<td>높은 성능, 학습률로 복잡도 제어</td>
+</tr>
+<tr>
+<td>히스토그램 기반 GB</td>
+<td>부스팅 + 256-bin</td>
+<td>구간화 + 결측 구간</td>
+<td>가장 빠름</td>
+<td>속도·성능·결측 처리 균형</td>
+</tr>
+</tbody>
+</table>
+<p><strong>확인 문제 답</strong></p>
+<ol>
+<li>여러 모델의 예측을 취합하는 방식 → <strong>앙상블 학습</strong></li>
+<li>비정형 데이터 → <strong>이미지 데이터</strong></li>
+<li>기본적으로 부트스트랩 샘플을 사용하는 알고리즘 → <strong>랜덤 포레스트</strong></li>
+</ol>
+<hr />
+<h2 id="2_1">2. 우리가 할 실험 — 대략적인 개요</h2>
+<blockquote>
+<p>출처: <code>C:\Users\ms026\Desktop\AID실험보고서_정리본.docx</code></p>
+</blockquote>
+<p><strong>주제:</strong> 외부 자기장에 의한 스마트패드 터치펜 인식 오류 분석 및 머신러닝 기반 좌표 보정</p>
+<p>EMR 방식의 스마트패드로 필기할 때 주변의 자석이나 전자기기가 접근하면 다음 두 가지 오류가 발생합니다.</p>
+<ul>
+<li><strong>좌표 왜곡(Bowing / Coordinate Distortion)</strong>: 직선을 그려도 펜 포인터가 실제 펜촉 위치와 다른 곳으로 밀려 나가 직선이 <strong>곡선으로 휘어</strong> 기록됩니다.</li>
+<li><strong>터치 미인식(Dead Zone)</strong>: 자기장이 임계치 이상으로 강한 특정 영역에서 필기가 인식되지 않고 <strong>선이 끊깁니다</strong>.</li>
+</ul>
+<p><strong>왜 하는가?</strong> 이런 인식 오류를 단순화된 조건에서 분석하고, 측정한 데이터로 좌표 보정 모델을 만들어 <strong>왜곡된 궤적을 원래의 직선으로 복원할 수 있는지 확인하기 위해서</strong>입니다.</p>
+<ul>
+<li>패드 내부 회로 비대칭, 필압, 펜 기울기 같은 부차 요인은 제외하고 <strong>오직 외부 정자기장에 의한 왜곡만</strong>을 원인으로 봅니다.</li>
+<li>태블릿만 놓았을 때의 전압을 <strong>기준 영점</strong>으로 잡고, 외부 자석을 놓았을 때 변한 전압에서 영점을 뺀 <strong>순수 외부 전압 변화량</strong>만을 머신러닝 입력으로 사용합니다.</li>
+<li>학습에는 세기가 다른 <strong>자석 1·2·3</strong>을 쓰고, 검증에는 학습에서 분리된 실생활 기기인 <strong>무선이어폰(버즈) 충전 케이스</strong>를 사용합니다.</li>
+</ul>
+<hr />
+<h2 id="3">3. 결과 화면과 좌표 보정</h2>
+<h3 id="3-1-image-1">3-1. [Image 1] 결과 화면 안내</h3>
+<blockquote>
+<p>첨부해주신 <code>[Image 1]</code> 이미지는 제가 직접 열 수 없었습니다. 이 모델은 이미지 입력을 지원하지 않아 <code>Cannot read orca-paste-...png</code> 오류가 발생했습니다. 아래 내용은 말씀해주신 설명과 실험보고서를 바탕으로 정리한 것이며, 결과 화면을 정확히 반영하려면 이미지를 다시 첨부해 주셔야 합니다.</p>
+</blockquote>
+<p>말씀하신 결과는 <strong>직선을 그렸는데도 인식 좌표가 자기장 때문에 휘어서 곡선처럼 나오고, 특정 구간에서는 선이 끊겨 보이는 형태</strong>입니다.</p>
+<h3 id="3-2">3-2. 좌표를 하나하나 절점으로 따는 이유</h3>
+<p>좌표를 하나하나씩 다 <strong>절점으로 따냈다</strong>는 것은, 펜이 지나간 궤적을 연속된 선이 아니라 <strong>점들의 좌표 <code>(x, y)</code> 시퀀스</strong>로 측정했다는 뜻입니다.</p>
+<p>각 절점마다 다음을 함께 기록합니다.</p>
+<ul>
+<li>홀 센서의 전압 변화량</li>
+<li>간섭원까지의 거리와 상대 위치</li>
+<li>인식된 좌표</li>
+<li>기준 좌표와의 오차</li>
+<li>필기 끊김 여부</li>
+</ul>
+<p>즉 <strong>각 절점이 머신러닝에서 말하는 하나의 샘플</strong>이 되고, 그때그때 측정한 값들이 <strong>특성</strong>이 됩니다. 05-1~05-3에서 배운 <strong>"샘플 × 특성" 구조가 그대로 적용</strong>되는 부분입니다. 이 절점 데이터를 모델에 넣어 오차를 예측하고, 예측한 오차만큼 좌표를 되돌려 보정합니다.</p>
+<h3 id="3-3">3-3. 보정에 사용하는 모델과 활용 방법</h3>
+<p><strong>① 모델 1 — 로지스틱 회귀: Dead Zone 사전 판별</strong></p>
+<p>간섭원까지의 물리적 거리와 원천 자기장 세기를 입력으로 받아, 해당 위치에서 필기가 끊길지(1) 정상적으로 써질지(0)를 <strong>확률</strong>로 예측합니다. 확률이 0.5가 되는 지점을 풀어 필기 끊김이 시작되는 <strong>임계 거리</strong>를 도출하고, 분류 정확도(Accuracy)와 F1-Score로 판별 성능을 검증합니다.</p>
+<ul>
+<li>타겟 누수(Target Leakage)를 막기 위해 이 모델에는 회귀 모델에서 쓰는 관측 거리가 아니라 <strong>물리적 기준 거리</strong>를 사용합니다.</li>
+<li>먼저 어디가 위험 구간인지 판별해 두어야 뒤의 회귀 보정에서 끊긴 구간을 구분할 수 있습니다.</li>
+</ul>
+<p><strong>② 모델 2-A — 다변수 다항 회귀 (Baseline): 좌표 왜곡 보정</strong></p>
+<p>필기가 정상 인식된 구간의 절점 데이터를 사용합니다.</p>
+<ul>
+<li>입력: 간섭원과의 상대 좌표 성분, 거리, 자기장 세기</li>
+<li>출력: 그 지점의 가로·세로 <strong>왜곡 오차</strong></li>
+<li>단일 직선 경로에서는 관측 거리에 따른 <strong>2차 다항 회귀식</strong>, 여러 간섭원과 자기장 세기를 함께 다룰 때는 <strong>교차항을 포함한 다변수 2차 다항 회귀식</strong>을 사용합니다. 곡선으로 휘어진 모양을 2차항으로 표현하는 것입니다.</li>
+<li>외삽 시 발산하는 것을 막기 위해 <strong>왜곡이 발생하는 유효 반경 안에서만</strong> 보정식을 적용하고 그 밖에서는 오차를 0으로 처리합니다.</li>
+<li>최종 복원: <strong>보정 좌표 = 인식 좌표 − 예측 오차</strong></li>
+</ul>
+<p><strong>③ 모델 2-B — RBF 커널 기반 SVR (제안 모델): 더 정교한 보정</strong></p>
+<p>같은 절점 데이터를 사용하지만, 입력 4차원 특성 벡터의 단위와 스케일이 서로 다르므로 먼저 <strong>StandardScaler로 Z-점수 표준화</strong>를 합니다.</p>
+<ul>
+<li>결정 트리나 랜덤 포레스트는 스케일링이 필요 없지만, <strong>SVR은 거리 기반 커널을 쓰기 때문에 표준화가 필요</strong>합니다(05-1에서 배운 차이를 활용한 부분).</li>
+<li>표준화된 입력에 <strong>가우시안 RBF 커널</strong>을 적용해 단순한 2차 다항식으로는 잡기 어려운 복잡한 <strong>비선형 왜곡</strong>을 포착하고, 가로·세로 왜곡 오차를 각각 예측합니다.</li>
+<li>다항 회귀보다 유연하게 휘어진 궤적을 복원하는 것이 제안 모델의 장점입니다.</li>
+</ul>
+<p><strong>④ 끊긴 구간 복원 — 스플라인 보간</strong></p>
+<p>Dead Zone 구간에서 미인식된 점은 좌표가 <code>NaN</code>이므로 회귀 모델의 학습 데이터에서 제외(<code>dropna</code>)합니다. 선이 끊긴 부분은 그대로 두면 궤적이 비어 있으므로:</p>
+<ol>
+<li>진입 직전 절점과 빠져나온 직후 절점을 먼저 위의 회귀 모델(모델 2)로 보정하고</li>
+<li>그 사이 끊어진 구간을 <strong>선형 보간 또는 3차 스플라인 보간법(Cubic Spline Interpolation)</strong>으로 이어서 전체 선을 복원합니다.</li>
+</ol>
+<p><strong>⑤ 결과 확인 방법</strong></p>
+<p>평면 위에 다음 네 선을 겹쳐 그려 직선이 복원되는지 시각적으로 비교합니다.</p>
+<ol>
+<li>기준 실제 직선</li>
+<li>보정 전 왜곡된 선</li>
+<li>다항 회귀(모델 2-A) 보정 후 선</li>
+<li>SVR과 스플라인 보간을 거친 최종 보정 선</li>
+</ol>
+<p>정량적으로는 <strong>결정계수 R²</strong>(모델의 설명력), <strong>RMSE</strong>(보정 전후 위치 오차), <strong>직선성 편차</strong>(기준 직선으로부터 예측 궤적까지의 수직 거리)로 복원 성능을 확인합니다.</p>
+<hr />
+<h2 id="4">4. 🎂 생일 축하</h2>
+<p>마지막으로, <strong>카카오톡으로 다운받은 사진</strong>을 함께 넣어 생일 축하도 했습니다.</p>
+<p>오늘의 주인공, 생일 진심으로 축하해요! 맛있는 것도 많이 먹고, 웃는 일 가득한 행복한 하루 보내길 바랍니다. 🎂🎉</p>
+<p><img alt="카카오톡으로 다운받은 생일 축하 사진" src="KakaoTalk_20261118_212420149.jpg" /></p>
+<blockquote>
+<p>Happy Birthday! 좋은 일만 가득하길 바라요 :)</p>
+</blockquote>
+  </div>
+  <footer>05-3 트리의 앙상블 정리 · GitHub Pages 배포</footer>
 </div>
-<script>
-const bar=document.getElementById('progress');
-window.addEventListener('scroll',()=>{const h=document.documentElement;const sc=h.scrollTop||document.body.scrollTop;const max=h.scrollHeight-h.clientHeight;bar.style.width=(max? (sc/max)*100:0)+'%';});
-const btn=document.getElementById('navToggle');const toc=document.getElementById('toc');
-if(btn){btn.addEventListener('click',()=>toc.classList.toggle('open'));toc.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>toc.classList.remove('open')));} 
-</script>
 </body>
 </html>
